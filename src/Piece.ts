@@ -1,4 +1,4 @@
-import { Container, Loader, Sprite } from "pixi.js";
+import { Container, Loader, Sprite, Texture } from "pixi.js";
 import GameElement from "./GameElement";
 
 export default class Piece extends GameElement {
@@ -20,27 +20,20 @@ export default class Piece extends GameElement {
 		}
 
 		if (!this.loaded) {
-			const loader = new Loader();
-			loader.add("piece", this.path);
+			const t = Texture.from(this.path);
+			const s = new Sprite(t);
 
-			return new Promise((resolve) =>
-				loader.load((_loader: any, resources: any) => {
-					const p = resources["piece"];
-					const s = new Sprite(p.texture);
-					this.setSpriteProperties(s);
+			this.setSpriteProperties(s);
 
-					for (const [event, cb] of this.listeners) {
-						s.addListener(event, cb);
-						s.interactive = true;
-					}
+			for (const [event, cb] of this.listeners) {
+				s.addListener(event, cb);
+				s.interactive = true;
+			}
 
-					this.object = s;
+			this.loaded = true;
+			this.object = s;
 
-					this.loaded = true;
-
-					resolve(s);
-				})
-			);
+			return s;
 		} else {
 			const s = this.object!;
 

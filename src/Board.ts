@@ -1,4 +1,4 @@
-import { Application, Container, DisplayObject, Graphics } from "pixi.js";
+import { Application, Container, Loader, Texture } from "pixi.js";
 import Cell, { Shade } from "./Cell";
 import GameElement from "./GameElement";
 import Piece from "./Piece";
@@ -19,7 +19,7 @@ enum PieceName {
 }
 
 const CELLS = 8 * 8;
-const BASE_SPRITE_PATH = "../assets/";
+const BASE_SPRITE_PATH = "../assets";
 
 export default class Board extends GameElement {
 	protected object: Container;
@@ -78,7 +78,7 @@ export default class Board extends GameElement {
 			this.object.addChild(await cell.draw());
 		}
 
-		this.loadBoard();
+		await this.loadBoard();
 
 		for (const piece of this.pieces) {
 			this.object.addChild(await piece.draw());
@@ -91,14 +91,25 @@ export default class Board extends GameElement {
 		return this.object;
 	}
 
-	placePiece(col: number, row: number) {
+	getCellCoords(col: number, row: number) {
 		const x = col * this.cellSize();
 		const y = row * this.cellSize();
 
 		return [x, y];
 	}
 
-	private loadBoard(board: number[] = this.initial) {
+	private async setupSprites(): Promise<void> {
+		return new Promise((resolve) => {
+			const loader = Loader.shared;
+			loader
+				.add("pieces", `${BASE_SPRITE_PATH}/spritesheet.json`)
+				.load(resolve);
+		});
+	}
+
+	private async loadBoard(board: number[] = this.initial) {
+		await this.setupSprites();
+
 		for (let i = 0; i < board.length; i++) {
 			const pieceValue = board[i];
 			if (pieceValue >= 0) {
@@ -107,7 +118,7 @@ export default class Board extends GameElement {
 
 				console.log(row, col);
 
-				const [x, y] = this.placePiece(col, row);
+				const [x, y] = this.getCellCoords(col, row);
 				const piece = new Piece(x, y, this.cellSize(), this.cellSize());
 
 				piece.path = this.buildPiecePath(pieceValue);
@@ -147,7 +158,7 @@ export default class Board extends GameElement {
 				break;
 		}
 
-		return `${BASE_SPRITE_PATH}${color}-${initial}.png`;
+		return `${color}-${initial}.png`;
 	}
 
 	private cellSize(): number {

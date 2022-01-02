@@ -13,7 +13,7 @@ export default class Game {
 
 	async run(el: HTMLElement) {
 		const board = this.#board;
-		board.placePiece(0, 0);
+		board.getCellCoords(0, 0);
 
 		el.appendChild(this.#app.view);
 		await board.draw();
