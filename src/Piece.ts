@@ -1,14 +1,24 @@
 import { Container, Loader, Sprite, Texture } from "pixi.js";
 import GameElement from "./GameElement";
 
+export type Color = "white" | "black";
+
 export default class Piece extends GameElement {
 	held: boolean;
 	object: Sprite | null;
 	path: string | null;
+	color: Color;
 
-	constructor(x: number, y: number, width: number, height: number) {
+	constructor(
+		color: Color,
+		x: number,
+		y: number,
+		width: number,
+		height: number
+	) {
 		super(x, y, width, height);
 
+		this.color = color;
 		this.held = false;
 		this.object = null;
 		this.path = null;

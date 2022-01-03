@@ -57,8 +57,10 @@ export default class Board extends GameElement {
 			const cell = new Cell(color, x, y, cellWidth, cellHeight);
 
 			cell.onMouseOver = () => {
-				cell.active = true;
-				cell.draw();
+				if (this.holding) {
+					cell.active = true;
+					cell.draw();
+				}
 			};
 
 			cell.onMouseOut = () => {
@@ -98,6 +100,14 @@ export default class Board extends GameElement {
 		return [x, y];
 	}
 
+	private removePiece(index: number): Piece {
+		const [piece] = this.pieces.splice(index, 1);
+
+		this.object.removeChild(piece.object!);
+
+		return piece;
+	}
+
 	private async setupSprites(): Promise<void> {
 		return new Promise((resolve) => {
 			const loader = Loader.shared;
@@ -115,16 +125,36 @@ export default class Board extends GameElement {
 			if (pieceValue >= 0) {
 				const col = 7 - (i % 8);
 				const row = 7 - Math.floor(i / 8);
-
-				console.log(row, col);
+				const color = pieceValue < 6 ? "white" : "black";
 
 				const [x, y] = this.getCellCoords(col, row);
-				const piece = new Piece(x, y, this.cellSize(), this.cellSize());
+				const piece = new Piece(
+					color,
+					x,
+					y,
+					this.cellSize(),
+					this.cellSize()
+				);
 
 				piece.path = this.buildPiecePath(pieceValue);
 				piece.onClick = () => {
-					this.holding = piece;
-					piece.draw();
+					if (this.holding && this.holding?.color !== piece.color) {
+						const capturedIndex = this.pieces.findIndex(
+							(p) => p === piece
+						);
+						const captured = this.removePiece(capturedIndex);
+
+						this.holding.x = captured.x;
+						this.holding.y = captured.y;
+						this.holding.draw();
+
+						this.holding = null;
+					} else if (this.holding !== piece) {
+						this.holding = piece;
+						piece.draw();
+					} else {
+						this.holding = null;
+					}
 				};
 
 				this.pieces.push(piece);
