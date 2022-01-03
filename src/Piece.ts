@@ -63,9 +63,6 @@ export default class Piece extends GameElement {
 				throw new Error("Unable to create piece graphics.");
 			}
 
-			console.log("width", this.width);
-			console.log("height", this.height);
-
 			g.beginFill(HELD_HIGHLIGHT_COLOR);
 			g.drawRect(0, 0, this.width, this.height);
 			g.endFill();
