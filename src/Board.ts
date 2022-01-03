@@ -72,6 +72,7 @@ export default class Board extends GameElement {
 				if (this.holding) {
 					this.holding.x = cell.x;
 					this.holding.y = cell.y;
+					this.holding.held = false;
 					this.holding.draw();
 					this.holding = null;
 				}
@@ -138,7 +139,11 @@ export default class Board extends GameElement {
 
 				piece.path = this.buildPiecePath(pieceValue);
 				piece.onClick = () => {
-					if (this.holding && this.holding?.color !== piece.color) {
+					if (this.holding === null) {
+						this.holding = piece;
+						piece.held = true;
+						piece.draw();
+					} else if (this.holding?.color !== piece.color) {
 						const capturedIndex = this.pieces.findIndex(
 							(p) => p === piece
 						);
@@ -146,14 +151,15 @@ export default class Board extends GameElement {
 
 						this.holding.x = captured.x;
 						this.holding.y = captured.y;
+						this.holding.held = false;
 						this.holding.draw();
 
 						this.holding = null;
 					} else if (this.holding !== piece) {
+						this.holding.held = false;
 						this.holding = piece;
+						piece.held = true;
 						piece.draw();
-					} else {
-						this.holding = null;
 					}
 				};
 

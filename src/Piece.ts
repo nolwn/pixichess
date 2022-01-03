@@ -1,13 +1,18 @@
-import { Container, Loader, Sprite, Texture } from "pixi.js";
+import { Container, Graphics, Sprite, Texture } from "pixi.js";
 import GameElement from "./GameElement";
 
 export type Color = "white" | "black";
 
+const HELD_HIGHLIGHT_COLOR = 0x33_77_66;
+
 export default class Piece extends GameElement {
-	held: boolean;
-	object: Sprite | null;
-	path: string | null;
 	color: Color;
+	graphics: Graphics | null;
+	object: Container | null;
+	path: string | null;
+	sprite: Sprite | null;
+
+	#held: boolean;
 
 	constructor(
 		color: Color,
@@ -19,9 +24,28 @@ export default class Piece extends GameElement {
 		super(x, y, width, height);
 
 		this.color = color;
-		this.held = false;
+		this.#held = false;
 		this.object = null;
+		this.sprite = null;
+		this.graphics = null;
 		this.path = null;
+	}
+
+	get held(): boolean {
+		return this.#held;
+	}
+
+	set held(held: boolean) {
+		if (this.#held === held) return;
+
+		this.#held = held;
+		const g = this.graphics!;
+
+		if (held) {
+			g.alpha = 1;
+		} else {
+			g.alpha = 0;
+		}
 	}
 
 	async draw(): Promise<Container> {
@@ -32,31 +56,55 @@ export default class Piece extends GameElement {
 		if (!this.loaded) {
 			const t = Texture.from(this.path);
 			const s = new Sprite(t);
+			const g = new Graphics();
+			const object = new Container();
 
-			this.setSpriteProperties(s);
+			if (!g) {
+				throw new Error("Unable to create piece graphics.");
+			}
+
+			console.log("width", this.width);
+			console.log("height", this.height);
+
+			g.beginFill(HELD_HIGHLIGHT_COLOR);
+			g.drawRect(0, 0, this.width, this.height);
+			g.endFill();
+
+			g.alpha = 0;
 
 			for (const [event, cb] of this.listeners) {
 				s.addListener(event, cb);
 				s.interactive = true;
 			}
 
+			object.addChild(g, s);
+
+			this.graphics = g;
+			this.sprite = s;
+			this.object = object;
 			this.loaded = true;
-			this.object = s;
-
-			return s;
-		} else {
-			const s = this.object!;
-
-			this.setSpriteProperties(s);
-
-			return s;
 		}
+
+		this.setObjectProperties();
+		return this.object!;
 	}
 
-	private setSpriteProperties(s: Sprite) {
-		s.x = this.getPaddedX();
-		s.y = this.getPaddedY();
-		s.width = this.getPaddedWidth();
-		s.height = this.getPaddedHeight();
+	private setObjectProperties() {
+		if (this.object) {
+			this.sprite!.x = 0;
+			this.sprite!.y = 0;
+			this.sprite!.width = this.width;
+			this.sprite!.height = this.height;
+
+			this.graphics!.x = 0;
+			this.graphics!.y = 0;
+			this.graphics!.width = this.width;
+			this.graphics!.height = this.height;
+
+			this.object!.x = this.getPaddedX();
+			this.object!.y = this.getPaddedY();
+			this.object!.width = this.getPaddedWidth();
+			this.object!.height = this.getPaddedHeight();
+		}
 	}
 }
